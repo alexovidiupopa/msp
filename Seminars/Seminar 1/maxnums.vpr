@@ -1,0 +1,18 @@
+method max(x: Int, y: Int) returns (r: Int)
+ensures r >= x
+ensures r >= y
+{
+    if (x >= y) {
+        r := x
+    } else {
+        r := y
+    }
+}
+
+
+// method max(x: Int, y: Int) returns (r: Int)
+// ensures r >= x
+// ensures r >= y
+// {
+//     r := x*x + y*y  // This satisfies the conditions but does not return max(x, y)
+// }
