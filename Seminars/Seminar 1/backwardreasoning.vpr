@@ -1,17 +1,22 @@
+// the weakest predicate is simply "true", as the postcondition is satisfied from the implementation, regardless of preconditions
 method a(x: Int, y: Int) returns (X: Int, Y: Int)
-requires y == 2*x
+requires true
 ensures X == y && Y == x
 {
     X := y - x
-    Y := y - x
+    Y := y - X
     X := Y + X
 }
 
+
+// x0 := x + y 
+// y0 := x0 * y = xy + y^2 
+// x + y > xy + y2 => (x+y) * (1-y) > 0, from which we get the predicate
 method b() {
     var x: Int
     var y: Int 
     
-    assume x > 0 && y == 0
+    assume (x + y > 0 && y < 1) || (x + y < 0 && y > 1)
 
     x := x + y
     y := x * y 
@@ -19,11 +24,15 @@ method b() {
     assert x > y
 }
 
+// we need to guarantee x > 7 
+// on the first branch, x does not change, so we need only the branch to be fulfilled and x > 7
+// on the second branch, x becomes y-x, so naturally it means y-x > 7 => y > x+7
+// the weakest predicate is (y > 5 && x > 7) || (y <= 5 && y > x+7)
 method c() {
     var x: Int
     var y: Int 
 
-    assume x > 7 || y > x+7 || (y < 0 && x > 7)
+    assume (y > 5 && x > 7) || (y <= 5 && y > x + 7);
 
     if (y > 5) { 
         y := x - y
@@ -34,6 +43,12 @@ method c() {
     assert x > 7
 }
 
+// we always need y to be even
+// on the two x branches we have: 
+// 1. x >= 17 -> y = 6 which is even 
+// 2. x < 17 and x > 3 -> y = 1 which is not even (so the branch needs to be avoided)
+// 3. x < 17 and x <= 3 -> y = 2 which is even 
+// so only the 1 and 3 branches are valid => x <= 3 || x >= 17
 method d(x: Int) returns (y: Int) 
 requires x >= 17 || x <= 3
 ensures y % 2 == 0
