@@ -1,10 +1,10 @@
 method maxSum(x: Int, y: Int) returns (sum: Int, max: Int)
-ensures sum == x + y
-ensures max >= x
-ensures max >= y
-ensures max == x || max == y
+    ensures sum == x + y
+    ensures max >= x && max >= y
+    ensures max == x || max == y
 {
     sum := x + y
+
     if (x >= y) {
         max := x
     } else {
@@ -12,35 +12,41 @@ ensures max == x || max == y
     }
 }
 
-
 method testMaxSum() 
 {
-    var s: Int
-    var m: Int
-    s, m := maxSum(1723, 42)
-    
-    assert s == 1765
-    assert m == 1723
+    var s: Int;
+    var m: Int;
+    s, m := maxSum(1723, 42);
+    assert s == 1765;
+    assert m == 1723;
 }
 
-method reconstructMaxSum(sum: Int, max: Int) returns (x: Int, y: Int)
-requires sum >= 2 * max // only works with this precondition
-ensures x + y == sum
-ensures max >= x || max <= x
-ensures max >= y || max <= y
-ensures max == x || max == y
+method reconstructMaxSum(sum: Int, max: Int) 
+    returns (x: Int, y: Int)
+    requires max >= sum - max     // Precondition: output must be reconstructible
+    ensures x + y == sum
+    // ensures x >= y ==> max == x
+    // ensures x < y  ==> max == y
+    ensures  (x >= y && x == max) || (y >= x && y == max);
 {
-    x := max
-    y := sum - max
+    // We choose the larger value as x and the other as y
+    x := max;
+    y := sum - max;
 }
 
-
-method testReconstructMaxSum()
-{
-    var x: Int
-    var y: Int
-    x, y := reconstructMaxSum(12, 6)
+method testReconstructMaxSum() {
+    // Example input values
+    var originalX: Int := 1723;
+    var originalY: Int := 42;
     
-    assert x + y == 12
-    assert x == 6 || y == 6
+    // Get sum and max from maxSum (assuming maxSum is implemented as specified)
+    var s: Int, m: Int;
+    s, m := maxSum(originalX, originalY);
+    // Now use reconstructMaxSum on the outputs of maxSum
+    var x: Int, y: Int;
+    x, y := reconstructMaxSum(s, m);
+    
+    // Verify that reconstructMaxSum returns a correct pair (should recover the original inputs here)
+    assert x + y == s;                      // Sum check (x+y should equal original s)
+    assert (x >= y && m == x) || (x < y && m == y);  // Max-value check consistent with original m
 }
