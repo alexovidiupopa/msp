@@ -1,65 +1,108 @@
-// the weakest predicate is simply "true", as the postcondition is satisfied from the implementation, regardless of preconditions
-method a(x: Int, y: Int) returns (X: Int, Y: Int)
-requires true
-ensures X == y && Y == x
+method a(x: Int, y: Int) returns (X: Int, Y: Int) 
+    requires true
+    ensures X == y && Y == x
 {
-    X := y - x
-    Y := y - X
-    X := Y + X
+    X := y - x;
+	//WP(X := y - x, y == y && (y - X) == x) => (y == y && (y - X) == x)[X/(y - x)] => y == y && (y - y + x) == x => y == y && x == x ==> true 
+    Y := y - X;
+	//WP(Y := y - X, (Y + X) == y && Y == x) => ((Y + X) == y && Y == x)[Y/(y - X)] => (y - X + X) == y && (y - X) == x => y == y && (y - X) == x
+    X := Y + X;
+	//WP(X := Y + X, X == y && Y == x) => (X == y && Y == x)[X/(Y + X)] => (Y + X) == y && Y == x
 }
 
+//     given that assert x > y
+//     and x0 and y0
+//     then 
+//     x = x0 + y0
+//     y = x * y = (x0 + y0) * y0
+//     x > y => x0 + y0 > (x0 + y0) * y0 => x0 + y0 - (x0 + y0) * y0 > 0
+//     then (x0 + y0) * (1 - y0) > 0
+//     so the weakest assumption would be:
+//         assume (x + y) * (1 - y) > 0
+//  
+method b() 
+{
+    var x: Int;
+	//forall x :: forall y :: (x + y) * (1 - y) > 0
+    var y: Int;
+	//forall y :: (x + y) * (1 - y) > 0
 
-// x0 := x + y 
-// y0 := x0 * y = xy + y^2 
-// x + y > xy + y2 => (x+y) * (1-y) > 0, from which we get the predicate
-method b() {
-    var x: Int
-    var y: Int 
-    
-    assume (x + y > 0 && y < 1) || (x + y < 0 && y > 1)
+    assume (x + y) * (1 - y) > 0;
+    //assume (x + y > 0 && y < 1) || (x + y < 0 && y > 1);
+	//assume R = R ==> Q 
+	//assume (x + y) * (1 - y) > 0
+	
+    x := x + y;
+	//WP(S1, WP(S2,Q)) = WP(x := x + y, x * (1 - y) > 0) = WP(S, Q) = Q[x/a] = (x * (1 - y) > 0)[x/(x + y)] = (x + y) * (1 - y) > 0
+    y := x * y;
+	//WP(S1, WP(S2, Q)) = WP(x := x + y, WP(y := x * y, x > y))
+	//WP(y := x * y, x > y) = WP(S, Q) = Q[x/a] = (x > y)[(x * y)/y] = x > x * y = x * (1 - y) > 0
 
-    x := x + y
-    y := x * y 
-
-    assert x > y
+    assert x > y;
+	//WP(S, Q) = WP(assert(x > y), Q) = R && Q = x > y && Q = x > y
 }
 
-// we need to guarantee x > 7 
-// on the first branch, x does not change, so we need only the branch to be fulfilled and x > 7
-// on the second branch, x becomes y-x, so naturally it means y-x > 7 => y > x+7
-// the weakest predicate is (y > 5 && x > 7) || (y <= 5 && y > x+7)
-method c() {
-    var x: Int
-    var y: Int 
+    // we must guarantee x > 7 in every possible branch.
+    // in the first branch we have y > 5
+    // then we do y = x - y
+    // so x doesn't change here actually which means that the final x is the initial x
+    // to have x > 7 we need the initial x to already be greater than 7
+    // in the second branch we have else which means y <= 5
+    // then we do x = y - x
+    // but we want final x > 7 which means y - x0 > 7 => x0 < y - 7
+    // so if y > then x (or x0) > 7 and if y <= 5 then x0 < y - 7
+    // so the weakest assumption would be:
+    //     assume (y > 5 ==> x > 7) && (y <= 5 ==> x < y - 7)
+method c() 
+{
+    var x: Int;
+	//forall x :: forall y :: (y > 5 => x > 7) && (y <= 5 => x < y - 7)
+    var y: Int;
+	//forall y :: (y > 5 => x > 7) && (y <= 5 => x < y - 7)
 
-    assume (y > 5 && x > 7) || (y <= 5 && y > x + 7);
+    assume (y > 5 ==> x > 7) && (y <= 5 ==> x < y - 7);
+    //assume (y > 5 && x > 7) || (y <= 5 && y > x + 7);
 
-    if (y > 5) { 
-        y := x - y
+
+    if (y > 5) {
+        y := x - y;
     } else {
-        x := y - x
+        x := y - x;
     }
+	//S1 [] S2 = WP(S1, Q) && WP(S2, Q) = WP(if B then S1 else S2) = (B => WP(S1, Q)) && (!B => WP(S2, Q))
+	//WP(S1, Q) = WP(y := x - y, x > 7) = (x > 7)[y/(x - y)] = x > 7
+	//WP(S2, Q) = WP(x: = y - x, x > 7) = (x > 7)[x/(y - x)] = y - x > 7 = x < y - 7
+	//(y > 5 => x > 7) && (y <= 5 => x < y - 7)
 
-    assert x > 7
+    assert x > 7;
+	//assert R = R && Q = assert x > 7
 }
 
-// we always need y to be even
-// on the two x branches we have: 
-// 1. x >= 17 -> y = 6 which is even 
-// 2. x < 17 and x > 3 -> y = 1 which is not even (so the branch needs to be avoided)
-// 3. x < 17 and x <= 3 -> y = 2 which is even 
-// so only the 1 and 3 branches are valid => x <= 3 || x >= 17
-method d(x: Int) returns (y: Int) 
-requires x >= 17 || x <= 3
-ensures y % 2 == 0
+    // given that we always need y to be even
+    // then we analyse the two branches
+    // if x >= 17 then y = 6 which is even
+    // if x < 17 and x > 3 then y = 1 which is odd 
+    // if x < 17 and x < 3 <=> x <= 3 the y = 2 which is even 
+    // so to avoid y = 1 then we need x to be between 3 and 17 (3 < x < 17)
+    // so the weakest precondition would be: 
+    //     requires x >= 17 || x <= 3
+method d(x: Int) returns (y: Int)
+    requires x >= 17 || x <= 3
+    ensures y % 2 == 0
 {
-    if (x < 17) {
-        if (x > 3) {
-            y := 1
+    if (x < 17) { //S1
+        if (x > 3) { 
+            y := 1; //S2
+			//WP(y := 1, y % 2 == 0) => (y % 2 == 0)[y/1] => 1 % 2 == 0 => false
         } else {
-            y := 2
+            y := 2; //S3
+			//WP(y := 2, y % 2 == 0) => (y % 2 == 0)[y/2] => 2 % 2 == 0 => true
         }
+		//S2 [] S3 = WP(S2, Q) && WP(S3, Q) = WP(if B then S2 else S3) = (B => WP(S2, Q)) && (!B => WP(S3, Q))
+		//(x > 3 => false) && (x <=3 => true) => x <= 3
     } else {
-        y := 6
+        y := 6 //S4
+		// WP(y := 6, y % 2 == 0) => (y % 2 == 0)[y/6] => 6 % 2 == 0 => true
     }
+	//WP(if x < 17 then S1 else S4, y % 2 == 0) = (x < 17 ==> x <= 3) && (x >= 17 ==> true) => x <= 3 || x >= 17
 }
