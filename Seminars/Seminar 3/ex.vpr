@@ -1,0 +1,112 @@
+method main()
+{
+    var M: Int
+    var N: Int
+    var res: Int
+    var m: Int
+
+    // Precondition: N > 0 and M >= 0
+    assume N > 0 && M >= 0
+
+    m := M
+    res := 0
+
+    while (m >= N)
+    // Loop Invariant: M == res * N + m
+    invariant M == res * N + m
+    {
+        m := m - N
+        res := res + 1
+    }
+
+    // Postcondition: M == res * N + m
+    assert M == res * N + m
+}
+
+method main2()
+{
+    var n: Int
+    var m: Int
+    var res: Int
+    var x: Int
+    var y: Int
+
+    // Precondition: n and m are non-negative
+    assume n >= 0 && m >= 0
+
+    x := n
+    y := m
+    res := 0
+
+    while (x > 0)
+    // Loop Invariant: res + x * y == n * m
+    invariant res + x * y == n * m
+    invariant x >= 0
+    {
+        if (x % 2 == 1) {
+            res := res + y
+        }
+        x := x / 2  // Right shift
+        y := y * 2  // Left shift
+    }
+
+    // Postcondition: res == n * m
+    assert res == n * m
+}
+
+method int_sqrt() {
+    var n: Int
+    assume n >= 0
+
+    var res: Int
+    res := 0
+
+    while ((res + 1) * (res + 1) < n)
+    invariant res * res <= n
+    {
+        res := res + 1
+    }
+
+    assert res * res <= n && n < (res + 1) * (res + 1)
+}
+
+method int_sqrt_fast() {
+    var n: Int
+    assume n >= 0
+
+    var res: Int
+    res := 0
+    var x: Int := 1
+    while (x < n)
+        invariant res * res <= n && x == (res + 1) * (res + 1)
+    {
+        x := x + 2 * res + 3
+        res := res + 1
+    }
+
+    assert res * res <= n && n <= (res + 1) * (res + 1)
+}
+
+method square(n: Int) returns (res: Int)
+    requires n >= 0
+    ensures res == n * n
+{
+    var i: Int := 0
+    res := 0
+
+    while (i < n)
+        invariant 0 <= i <= n
+        invariant res == i * n
+    {
+        var j: Int := 0
+        while (j < n)
+            invariant 0 <= j <= n
+            invariant res == i * n + j
+        {
+            res := res + 1
+            j := j + 1
+        }
+
+        i := i + 1
+    }
+}
