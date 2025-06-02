@@ -1,0 +1,40 @@
+field elem: Int
+field next: Ref
+
+predicate list(this: Ref) {
+  acc(this.elem) && acc(this.next)&& acc(this.next.elem) &&
+  (this.next != null ==> list(this.next)  && this.elem <= this.next.elem)
+}
+
+method append(this: Ref, e: Int)
+  requires list(this)
+  ensures  list(this)
+{
+  unfold list(this)
+
+  if (this.next == null) {
+    // Insert at end
+    var n: Ref
+    n := new(elem, next)
+    n.elem := e
+    n.next := null
+    fold list(n)
+    this.next := n
+  } else {
+    unfold list(this.next)  // Needed to access this.next.elem
+    if (e <= this.next.elem) {
+      // Insert before this.next
+      var n: Ref
+      n := new(elem, next)
+      n.elem := e
+      n.next := this.next
+      fold list(n)
+      this.next := n
+    } else {
+      append(this.next, e)
+    }
+    fold list(this.next) // Re-fold after accessing it
+  }
+
+  fold list(this)
+}
