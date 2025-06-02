@@ -1,0 +1,12 @@
+field f: Int
+
+method alias(a: Ref, b: Ref)
+  requires a == b ==> acc(a.f)
+  requires a != b ==> acc(a.f) && acc(b.f)
+{
+  a.f := 5;
+  b.f := 7;
+  // assert a.f == 5;  => does not hold anymore, because if the two references are equal, b.f will set a.f to 7 as well
+  assert a != b ==> (a.f == 5 && b.f == 7);
+  assert a == b ==> (a.f == 7);
+}

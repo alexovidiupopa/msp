@@ -1,0 +1,42 @@
+domain Point { 
+
+   function cons(x: Int, y: Int): Point
+
+   function first(p: Point): Int 
+   function second(p: Point): Int 
+
+   axiom destruct_over_construct {
+      forall x: Int, y: Int :: first(cons(x,y)) == x && second(cons(x,y)) == y
+   }
+
+   function add(p: Point, q: Point): Point 
+
+   // https://viper.ethz.ch/tutorial/#quantifiers 
+   
+   axiom add_points_good { 
+      forall p: Point, q: Point :: { first(add(p,q)) } { second(add(p,q)) } 
+         first(add(p,q)) == first(p) + first(q) 
+         && second(add(p,q)) == second(p) + second(q)
+   }
+
+   // axiom add_points_restrictive { 
+   //    forall p: Point, q: Point :: { first(add(p,q)), second(add(p,q)) } 
+   //       first(add(p,q)) == first(p) + first(q) 
+   //       && second(add(p,q)) == second(p) + second(q)
+   // }
+
+   // axiom add_points_matching_loop { 
+   //    forall p: Point, q: Point :: { first(p), first(q) } 
+   //       first(add(p,q)) == first(p) + first(q) 
+   //       && second(add(p,q)) == second(p) + second(q)
+   // }
+}
+
+
+method test()
+{
+   var x: Point := add( cons(17, 42), cons(3,8) )
+
+   assert first(x) == 20
+   assert second(x) == 50
+}

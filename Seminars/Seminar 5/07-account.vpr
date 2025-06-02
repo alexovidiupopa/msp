@@ -1,0 +1,54 @@
+field bal: Int
+
+method create() returns (a: Ref)
+  ensures acc(a.bal)
+{
+  a := new()
+  inhale acc(a.bal)
+  a.bal := 0 
+}
+
+
+// Deposits a non-negative amount to the given account
+method deposit(a: Ref, amount: Int)
+  requires amount >= 0
+  requires acc(a.bal)
+  ensures acc(a.bal)
+  ensures acc(a.bal) && a.bal == old(a.bal) + amount
+{
+    inhale acc(a.bal)
+    a.bal := a.bal + amount
+}
+
+// // Transfers a non-negative amount between accounts
+method transfer(src: Ref, dest: Ref, amount: Int)
+  requires amount >= 0
+  requires acc(src.bal) && src.bal >= amount
+  requires acc(dest.bal)
+  ensures acc(src.bal) && src.bal == old(src.bal) - amount
+  ensures acc(dest.bal) && dest.bal == old(dest.bal) + amount
+{
+    inhale acc(src.bal) && acc(dest.bal)
+    src.bal := src.bal - amount
+    dest.bal := dest.bal + amount
+}
+
+method client()
+{
+  var x: Ref
+  var y: Ref
+  var z: Ref
+
+  x := create()
+  y := create()
+  z := create()
+
+  deposit(x, 100)
+  deposit(y, 200)
+  deposit(z, 300)
+  transfer(x, y, 100)
+
+  assert x.bal == 0
+  assert y.bal == 300
+  assert z.bal == 300
+}
