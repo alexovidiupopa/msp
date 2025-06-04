@@ -3,45 +3,43 @@ field val: Int
 
 // Factory
 field cache: Ref
-field isLock: Bool
+field lock: Bool
 
-define Inv(this) (
+// Helper macro for gaining access to the cache and lock
+define myInvariant(this) (
   acc(this.cache, write) && 
-  acc(this.isLock, write) &&
+  acc(this.lock, write) &&
   (this.cache != null ==> acc(this.cache.val, write))
 )
 
-define share(this) {
-  exhale Inv(this)
-  inhale acc(this.isLock, wildcard)
+// Helper macro to gain the write perms
+define getWritePerms(this) {
+  assert acc(this.lock, wildcard)
+  inhale myInvariant(this)
 }
 
-define acquire(this) {
-  assert acc(this.isLock, wildcard)
-  inhale Inv(this)
-}
-
-define release(this) {
-  exhale Inv(this)
+// Helper macro to release the write
+define releaseWritePerms(this) {
+  exhale myInvariant(this)
 }
 
 method get(this: Ref) returns (fly: Ref)
-  requires Inv(this)
+  requires myInvariant(this)
   ensures acc(fly.val, wildcard)
 {
-  acquire(this)
+  getWritePerms(this)
   
   if(this.cache == null) {
     fly := new(val)
-    fly.val := 0  // Initialize with default value
+    fly.val := 0
     this.cache := fly
   }
   
   fly := this.cache
   
-  // We need to ensure the caller gets read access to f.val
+  // Give up write access and give wildcard (read) access
   exhale acc(fly.val, write)
   inhale acc(fly.val, wildcard)
   
-  release(this)
+  releaseWritePerms(this)
 }

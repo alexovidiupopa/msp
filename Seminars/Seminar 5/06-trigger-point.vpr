@@ -13,18 +13,21 @@ domain Point {
 
    // https://viper.ethz.ch/tutorial/#quantifiers 
    
+   // The quantifier can be instantiated when either first(add(p,q)) or second(add(p,q)) is used in a proof
    axiom add_points_good { 
       forall p: Point, q: Point :: { first(add(p,q)) } { second(add(p,q)) } 
          first(add(p,q)) == first(p) + first(q) 
          && second(add(p,q)) == second(p) + second(q)
    }
 
+   // The quantifier is instantiated only when both first(add(p,q)) and second(add(p,q)) are used together in a proof
    // axiom add_points_restrictive { 
    //    forall p: Point, q: Point :: { first(add(p,q)), second(add(p,q)) } 
    //       first(add(p,q)) == first(p) + first(q) 
    //       && second(add(p,q)) == second(p) + second(q)
    // }
 
+   // Does not reference add(p,q) => repeated instantiation
    // axiom add_points_matching_loop { 
    //    forall p: Point, q: Point :: { first(p), first(q) } 
    //       first(add(p,q)) == first(p) + first(q) 
